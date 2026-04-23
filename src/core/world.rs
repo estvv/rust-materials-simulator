@@ -163,6 +163,28 @@ impl World {
                     let below_id = new_cells[below_index];
 
                     if below_id != 0 && below_id != material_id {
+                        let my_behavior = materials.get_behavior(material_id);
+                        let below_behavior = materials.get_behavior(below_id);
+
+                        let my_can_move = matches!(
+                            my_behavior,
+                            Some(
+                                crate::core::behavior::Behavior::Granular
+                                    | crate::core::behavior::Behavior::Liquid
+                            )
+                        );
+                        let below_can_move = matches!(
+                            below_behavior,
+                            Some(
+                                crate::core::behavior::Behavior::Granular
+                                    | crate::core::behavior::Behavior::Liquid
+                            )
+                        );
+
+                        if !my_can_move || !below_can_move {
+                            continue;
+                        }
+
                         let my_density = match materials.get_density(material_id) {
                             Some(d) => d,
                             None => continue,

@@ -21,8 +21,7 @@ fn main() {
     let cfg = config::load_all(
         "config/materials.toml",
         "config/menu.toml",
-        "config/options.toml",
-        "config/start.toml",
+        "config/options.toml"
     );
 
     let state = AppState::new(

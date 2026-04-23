@@ -86,7 +86,12 @@ impl AppState {
                     let py = py as u32;
 
                     if px < self.world.width && py < self.world.height {
-                        self.world.set_cell(px, py, self.selected_material);
+                        let is_empty = self.world.get_cell(px, py).is_none();
+                        let is_air = self.selected_material == 0;
+
+                        if is_empty || is_air {
+                            self.world.set_cell(px, py, self.selected_material);
+                        }
                     }
                 }
             }

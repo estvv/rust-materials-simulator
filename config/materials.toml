@@ -1,6 +1,13 @@
 # config/materials.toml
 
 [[material]]
+id = 0
+name = "Air"
+color = "#ffffff"
+behavior = "solid"
+density = 0.0
+
+[[material]]
 id = 1
 name = "Sand"
 color = "#EEDD82"

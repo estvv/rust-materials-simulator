@@ -6,7 +6,7 @@ use log::error;
 use serde::Deserialize;
 use std::{fs, process::exit};
 
-use crate::config::config::{Config, StartConfig};
+use crate::config::config::{Config};
 use crate::config::options::Options;
 use crate::core::material::Material;
 use crate::core::registry::MaterialRegistry;
@@ -114,36 +114,6 @@ pub fn load_options(filepath: &str) -> Options {
     config
 }
 
-/// Loads the starting cells configuration from a TOML file.
-///
-/// Parses the initial world state configuration.
-/// Exits with code 1 if the file cannot be read or parsed.
-pub fn load_start(filepath: &str) -> StartConfig {
-    log::info!("Parsing start config from: {}", filepath);
-
-    let content = fs::read_to_string(filepath).unwrap_or_else(|_| {
-        error!("Could not read start config: {}", filepath);
-        exit(1);
-    });
-
-    let config: StartConfig = toml::from_str(&content).unwrap_or_else(|e| {
-        error!("TOML parse error in {}: {}", filepath, e);
-        exit(1);
-    });
-
-    for cell in &config.cells {
-        log::debug!(
-            "  Cell at ({}, {}) = material {}",
-            cell.x,
-            cell.y,
-            cell.material_id
-        );
-    }
-
-    log::info!("Loaded {} starting cells", config.cells.len());
-    config
-}
-
 /// Loads all configuration files and returns a complete Config struct.
 ///
 /// This is the main entry point for configuration loading, combining
@@ -151,13 +121,11 @@ pub fn load_start(filepath: &str) -> StartConfig {
 pub fn load_all(
     materials_path: &str,
     menu_path: &str,
-    options_path: &str,
-    start_path: &str,
+    options_path: &str
 ) -> Config {
     Config {
         materials: load_materials(materials_path),
         menu: load_menu(menu_path),
-        options: load_options(options_path),
-        start: load_start(start_path),
+        options: load_options(options_path)
     }
 }
