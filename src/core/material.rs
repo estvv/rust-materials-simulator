@@ -21,4 +21,6 @@ pub struct Material {
     pub color: String,
     /// The behavioral type that determines how this material moves.
     pub behavior: Behavior,
+    /// The density of this material.
+    pub density: f32,
 }

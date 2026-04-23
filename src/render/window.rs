@@ -8,7 +8,7 @@ use raylib::prelude::*;
 use crate::config::Config;
 use crate::core::state::AppState;
 use crate::render::ui;
-use crate::utils::layout::{calculate_sidebar_width, BUTTON_HEIGHT, GRID_GAP, PADDING};
+use crate::utils::layout::{calculate_sidebar_width, BUTTON_GAP, BUTTON_HEIGHT, GRID_GAP, PADDING};
 
 const COLOR_BACKGROUND: Color = Color::new(248, 250, 252, 255);
 
@@ -71,7 +71,7 @@ pub fn run(rl: &mut RaylibHandle, thread: &RaylibThread, config: &Config, mut st
         let mouse_down = rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT);
 
         if mouse_pressed {
-            handle_button_click(&mut state);
+            handle_button_click(&mut state, screen_width, sidebar_width, materials);
         }
 
         if mouse_down {
@@ -130,8 +130,8 @@ fn is_over_grid(mouse_x: i32, mouse_y: i32, sidebar_x: i32) -> bool {
 
 /// Updates the hover state based on mouse position.
 ///
-/// Checks if the mouse is hovering over action buttons or material buttons
-/// and updates the state accordingly.
+/// Checks if the mouse is hovering over action buttons, material buttons,
+/// or brush size buttons and updates the state accordingly.
 fn update_hover_state(
     state: &mut AppState,
     screen_width: i32,
@@ -145,6 +145,7 @@ fn update_hover_state(
 
     let y_start = PADDING;
 
+    // Check action buttons
     if let Some(action) =
         ui::action_buttons::is_hovered(mouse_x, mouse_y, sidebar_x, sidebar_width, y_start, buttons)
     {
@@ -153,7 +154,13 @@ fn update_hover_state(
         return;
     }
 
+    // Check materials
     let materials_y = PADDING + BUTTON_HEIGHT + 15 + 15;
+    let materials_count = materials.len() as i32;
+    let materials_rows = (materials_count + 1) / 2;
+    let materials_height =
+        materials_rows * (ui::materials::MATERIAL_BUTTON_HEIGHT + BUTTON_GAP) - BUTTON_GAP;
+    let materials_end_y = materials_y + materials_height + PADDING;
 
     if let Some(material_id) = ui::materials::get_hovered(
         mouse_x,
@@ -168,6 +175,16 @@ fn update_hover_state(
         return;
     }
 
+    // Check brush size buttons
+    let brush_y = materials_end_y + 15; // After separator
+    if let Some(_size) =
+        ui::brush_size::get_hovered(mouse_x, mouse_y, sidebar_x, sidebar_width, brush_y)
+    {
+        state.hovered_action = Some("brush_size".to_string());
+        state.hovered_material = None;
+        return;
+    }
+
     state.hovered_material = None;
     state.hovered_action = None;
 }
@@ -176,8 +193,37 @@ fn update_hover_state(
 ///
 /// Executes the corresponding action for action buttons or selects
 /// a material for material buttons.
-fn handle_button_click(state: &mut AppState) {
+fn handle_button_click(
+    state: &mut AppState,
+    screen_width: i32,
+    sidebar_width: i32,
+    materials: &crate::core::registry::MaterialRegistry,
+) {
+    // Check action buttons
     if let Some(ref action) = state.hovered_action.clone() {
+        if action == "brush_size" {
+            // Handle brush size click
+            let mouse_x = state.mouse_pos.0;
+            let mouse_y = state.mouse_pos.1;
+            let sidebar_x = screen_width - sidebar_width;
+
+            let materials_y = PADDING + BUTTON_HEIGHT + 15 + 15;
+            let materials_count = materials.len() as i32;
+            let materials_rows = (materials_count + 1) / 2;
+            let materials_height =
+                materials_rows * (ui::materials::MATERIAL_BUTTON_HEIGHT + BUTTON_GAP) - BUTTON_GAP;
+            let materials_end_y = materials_y + materials_height + PADDING;
+
+            let brush_y = materials_end_y + 15;
+
+            if let Some(size) =
+                ui::brush_size::get_hovered(mouse_x, mouse_y, sidebar_x, sidebar_width, brush_y)
+            {
+                state.set_brush_size(size);
+            }
+            return;
+        }
+
         match action.as_str() {
             "toggle_simulation" => state.toggle_pause(),
             "clear_world" => state.clear_grid(),

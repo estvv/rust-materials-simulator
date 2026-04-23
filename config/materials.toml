@@ -5,9 +5,18 @@ id = 1
 name = "Sand"
 color = "#EEDD82"
 behavior = "granular"
+density = 1.5
 
 [[material]]
 id = 2
 name = "Water"
 color = "#6e6eff"
 behavior = "liquid"
+density = 0.998
+
+[[material]]
+id = 3
+name = "Stone"
+color = "#6e6e6e"
+behavior = "solid"
+density = 2.5

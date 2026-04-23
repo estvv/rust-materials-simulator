@@ -1,6 +1,7 @@
 //! Sidebar UI rendering.
 //!
-//! Draws the sidebar panel containing action buttons and material selection.
+//! Draws the sidebar panel containing action buttons, material selection,
+//! and brush size options.
 
 use raylib::prelude::*;
 
@@ -8,6 +9,7 @@ use crate::config::options::rendering::RenderingOptions;
 use crate::core::registry::MaterialRegistry;
 use crate::core::state::AppState;
 use crate::render::ui::action_buttons;
+use crate::render::ui::brush_size;
 use crate::render::ui::button::Button;
 use crate::render::ui::materials;
 use crate::utils::layout::PADDING;
@@ -15,7 +17,8 @@ use crate::utils::layout::PADDING;
 pub const COLOR_SIDEBAR: Color = Color::new(245, 245, 250, 255);
 pub const COLOR_SEPARATOR: Color = Color::new(220, 220, 230, 255);
 
-/// Draws the complete sidebar including action buttons, materials list, and FPS display.
+/// Draws the complete sidebar including action buttons, materials list,
+/// brush size options, and FPS display.
 pub fn draw(
     d: &mut RaylibDrawHandle,
     sidebar_x: i32,
@@ -39,7 +42,11 @@ pub fn draw(
 
     y = draw_separator(d, sidebar_x, sidebar_width, y);
 
-    materials::draw(d, sidebar_x, sidebar_width, y, state, materials);
+    y = materials::draw(d, sidebar_x, sidebar_width, y, state, materials);
+
+    y = draw_separator(d, sidebar_x, sidebar_width, y);
+
+    brush_size::draw(d, sidebar_x, sidebar_width, y, state);
 
     if rendering.show_fps {
         let screen_height = d.get_screen_height();

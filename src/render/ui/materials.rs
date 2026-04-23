@@ -7,13 +7,15 @@ use raylib::prelude::*;
 use crate::core::registry::MaterialRegistry;
 use crate::core::state::AppState;
 use crate::utils::color::{lighten, parse_hex};
-use crate::utils::layout::{BUTTON_GAP, FONT_SIZE_BUTTON, MATERIAL_BUTTON_HEIGHT, PADDING};
+use crate::utils::layout::{BUTTON_GAP, FONT_SIZE_BUTTON, PADDING};
 
+pub const MATERIAL_BUTTON_HEIGHT: i32 = 32;
 pub const COLOR_TEXT: Color = Color::new(50, 50, 60, 255);
 pub const COLOR_SELECTED: Color = Color::new(80, 80, 90, 255);
 pub const COLOR_HOVER_BORDER: Color = Color::new(80, 80, 90, 255);
 
 /// Draws all material selection buttons in a two-column grid layout.
+/// Returns the Y position after the last button.
 pub fn draw(
     d: &mut RaylibDrawHandle,
     sidebar_x: i32,
@@ -21,7 +23,7 @@ pub fn draw(
     y_start: i32,
     state: &AppState,
     materials: &MaterialRegistry,
-) {
+) -> i32 {
     let button_width = (sidebar_width - PADDING * 2 - BUTTON_GAP) / 2;
     let x = sidebar_x + PADDING;
     let y = y_start;
@@ -89,6 +91,10 @@ pub fn draw(
             is_hovered,
         );
     }
+
+    // Return Y position after all buttons plus padding
+    let rows = (items.len() + 1) / 2;
+    y_start + (rows as i32 * (MATERIAL_BUTTON_HEIGHT + BUTTON_GAP)) - BUTTON_GAP + PADDING
 }
 
 /// Returns the material ID of the button currently hovered by the mouse, if any.

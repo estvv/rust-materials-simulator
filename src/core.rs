@@ -4,6 +4,7 @@
 //! including the world grid, cell management, material definitions, and behavioral traits.
 
 pub mod behavior;
+pub mod behaviors;
 pub mod cell;
 pub mod material;
 pub mod registry;

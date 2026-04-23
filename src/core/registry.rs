@@ -51,7 +51,18 @@ impl MaterialRegistry {
         self.materials.iter()
     }
 
+    /// Retrieves the behavior of a material by its ID.
     pub fn get_behavior(&self, id: u32) -> Option<&crate::core::behavior::Behavior> {
         self.get(id).map(|m| &m.behavior)
+    }
+
+    /// Retrieves the display name of a material by its ID.
+    pub fn get_color(&self, id: u32) -> Option<&str> {
+        self.get(id).map(|m| m.color.as_str())
+    }
+
+    /// Retrieves the density of a material by its ID.
+    pub fn get_density(&self, id: u32) -> Option<f32> {
+        self.get(id).map(|m| m.density)
     }
 }

@@ -26,6 +26,8 @@ pub struct AppState {
     pub update_accumulator: f32,
     /// Fixed timestep duration in seconds (how often simulation updates).
     pub tick_duration: f32,
+    /// Brush size for painting cells (1-10).
+    pub brush_size: u32,
 }
 
 impl AppState {
@@ -43,6 +45,7 @@ impl AppState {
             world: World::new(grid_width, grid_height),
             update_accumulator: 0.0,
             tick_duration: 1.0 / 60.0,
+            brush_size: 1,
         }
     }
 
@@ -71,13 +74,29 @@ impl AppState {
 
     /// Handles a click on the grid, placing the selected material at the given position.
     pub fn on_grid_click(&mut self, grid_x: u32, grid_y: u32) {
-        self.world.set_cell(grid_x, grid_y, self.selected_material);
-        log::info!(
-            "Set cell ({}, {}) to material {}",
-            grid_x,
-            grid_y,
-            self.selected_material
-        );
+        let half_brush = self.brush_size as i32 / 2;
+
+        for dy in -half_brush..=half_brush {
+            for dx in -half_brush..=half_brush {
+                let px = grid_x as i32 + dx;
+                let py = grid_y as i32 + dy;
+
+                if px >= 0 && py >= 0 {
+                    let px = px as u32;
+                    let py = py as u32;
+
+                    if px < self.world.width && py < self.world.height {
+                        self.world.set_cell(px, py, self.selected_material);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Sets the brush size for painting cells.
+    pub fn set_brush_size(&mut self, size: u32) {
+        self.brush_size = size.clamp(1, 10);
+        log::info!("Brush size set to: {}", self.brush_size);
     }
 
     /// Accumulates frame time and returns the number of simulation ticks to run.

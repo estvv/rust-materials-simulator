@@ -1,11 +1,10 @@
 //! World grid simulation logic.
 //!
-//! This module contains the core simulation grid where particles are stored
-//! and updated according to their material behaviors.
+//! This module contains the core simulation grid where particles are stored.
+//! Movement behavior is delegated to the behaviors module.
 
-use crate::core::behavior::Behavior;
+use crate::core::behaviors;
 use crate::core::registry::MaterialRegistry;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct World {
     pub width: u32,
@@ -27,7 +26,6 @@ impl World {
     pub fn set_cell(&mut self, x: u32, y: u32, material_id: u32) {
         if x < self.width && y < self.height {
             let index = self.get_index(x, y);
-
             self.cells[index] = material_id;
         } else {
             log::error!("Attempted to set cell ({}, {}) out of bounds", x, y);
@@ -108,15 +106,76 @@ impl World {
                 let index = self.get_index(x, y);
                 let material_id = self.cells[index];
 
-                if material_id != 0 {
-                    let behavior = materials.get_behavior(material_id);
-                    let new_pos = self.get_behavior_callback(behavior, x, y, &new_cells, self.tick);
+                if material_id == 0 {
+                    continue;
+                }
+                if new_cells[index] != 0 {
+                    continue;
+                }
 
-                    if let Some((nx, ny)) = new_pos {
+                let behavior = materials.get_behavior(material_id);
+
+                let ctx = behaviors::BehaviorContext {
+                    x,
+                    y,
+                    material_id,
+                    tick: self.tick,
+                    width: self.width,
+                    height: self.height,
+                    cells: &self.cells,
+                    new_cells: &new_cells,
+                    materials,
+                };
+
+                let new_pos = match behavior {
+                    Some(b) => behaviors::dispatch(b, &ctx),
+                    None => None,
+                };
+
+                match new_pos {
+                    Some((nx, ny)) => {
                         let new_index = self.get_index(nx, ny);
-                        new_cells[new_index] = material_id;
-                    } else {
+
+                        if new_cells[new_index] == 0 {
+                            new_cells[new_index] = material_id;
+                        } else {
+                            new_cells[index] = material_id;
+                        }
+                    }
+                    None => {
                         new_cells[index] = material_id;
+                    }
+                }
+            }
+        }
+
+        for y in (0..self.height).rev() {
+            for x in 0..self.width {
+                let index = self.get_index(x, y);
+                let material_id = new_cells[index];
+
+                if material_id == 0 {
+                    continue;
+                }
+
+                if y + 1 < self.height {
+                    let below_index = self.get_index(x, y + 1);
+                    let below_id = new_cells[below_index];
+
+                    if below_id != 0 && below_id != material_id {
+                        let my_density = match materials.get_density(material_id) {
+                            Some(d) => d,
+                            None => continue,
+                        };
+                        let below_density = match materials.get_density(below_id) {
+                            Some(d) => d,
+                            None => continue,
+                        };
+
+                        if my_density > below_density {
+                            new_cells[index] = below_id;
+                            new_cells[below_index] = material_id;
+                        }
                     }
                 }
             }
@@ -125,109 +184,4 @@ impl World {
         self.cells = new_cells;
         self.tick = self.tick.wrapping_add(1);
     }
-
-    fn get_behavior_callback(
-        &self,
-        behavior: Option<&Behavior>,
-        x: u32,
-        y: u32,
-        new_cells: &Vec<u32>,
-        tick: u32,
-    ) -> Option<(u32, u32)> {
-        match behavior? {
-            Behavior::Granular => self.find_fall_position(x, y, new_cells),
-            Behavior::Liquid => self.find_liquid_position(x, y, new_cells, tick),
-            _ => Some((x, y)),
-        }
-    }
-
-    fn find_fall_position(&self, x: u32, y: u32, new_cells: &Vec<u32>) -> Option<(u32, u32)> {
-        if y + 1 >= self.height {
-            return None;
-        }
-
-        if self.is_empty(x, y + 1, new_cells) {
-            return Some((x, y + 1));
-        }
-
-        let can_left = x > 0;
-        let can_right = x + 1 < self.width;
-
-        let mut options: Vec<(u32, u32)> = Vec::new();
-
-        if can_left && self.is_empty(x - 1, y + 1, new_cells) {
-            options.push((x - 1, y + 1));
-        }
-        if can_right && self.is_empty(x + 1, y + 1, new_cells) {
-            options.push((x + 1, y + 1));
-        }
-
-        if !options.is_empty() {
-            Some(options[rand_index(options.len())])
-        } else {
-            None
-        }
-    }
-
-    fn find_liquid_position(
-        &self,
-        x: u32,
-        y: u32,
-        new_cells: &Vec<u32>,
-        tick: u32,
-    ) -> Option<(u32, u32)> {
-        if y + 1 < self.height && self.is_empty(x, y + 1, new_cells) {
-            return Some((x, y + 1));
-        }
-
-        let can_left = x > 0;
-        let can_right = x + 1 < self.width;
-        let can_down = y + 1 < self.height;
-
-        let mut below_options: Vec<(u32, u32)> = Vec::new();
-
-        if can_down && can_left && self.is_empty(x - 1, y + 1, new_cells) {
-            below_options.push((x - 1, y + 1));
-        }
-        if can_down && can_right && self.is_empty(x + 1, y + 1, new_cells) {
-            below_options.push((x + 1, y + 1));
-        }
-
-        if !below_options.is_empty() {
-            return Some(below_options[rand_index(below_options.len())]);
-        }
-
-        let mut side_options: Vec<(u32, u32)> = Vec::new();
-
-        if can_left && self.is_empty(x - 1, y, new_cells) {
-            side_options.push((x - 1, y));
-        }
-        if can_right && self.is_empty(x + 1, y, new_cells) {
-            side_options.push((x + 1, y));
-        }
-
-        if !side_options.is_empty() {
-            let should_settle = (tick.wrapping_add(x).wrapping_add(y)) % 3 == 0;
-
-            if should_settle {
-                None
-            } else {
-                Some(side_options[rand_index(side_options.len())])
-            }
-        } else {
-            None
-        }
-    }
-
-    fn is_empty(&self, x: u32, y: u32, new_cells: &Vec<u32>) -> bool {
-        self.get_cell(x, y).is_none() && new_cells[self.get_index(x, y)] == 0
-    }
-}
-
-fn rand_index(len: usize) -> usize {
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .subsec_nanos() as usize;
-    nanos % len
 }
