@@ -16,25 +16,25 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+
     - name: Install Emscripten SDK
       uses: mymindstorm/setup-emsdk@v14
       with:
         version: latest
         actions-cache-folder: 'emsdk-cache'
-        
+
     - name: Verify Emscripten
       run: emcc --version
-        
+
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
         targets: wasm32-unknown-emscripten
-        
+
     - name: Cache Cargo builds
       uses: actions/cache@v4
       with:
@@ -45,28 +45,28 @@ jobs:
         key: ${{ runner.os }}-cargo-emscripten-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-emscripten-
-          
+
     - name: Build WASM
       env:
-        EMCC_CFLAGS: "-O3 -sUSE_GLFW=3 -sASSERTIONS=0 -sWASM=1 -sGL_ENABLE_GET_PROC_ADDRESS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1 --preload-file ./config@config"
+        EMCC_CFLAGS: "-O3 -sUSE_GLFW=3 -sASSERTIONS=0 -sWASM=1 -sGL_ENABLE_GET_PROC_ADDRESS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1"
       run: cargo build --target wasm32-unknown-emscripten --release
-      
+
     - name: Prepare deployment package
       run: |
         mkdir -p deploy
         cp web/index.html deploy/
-        
+
         OUT=target/wasm32-unknown-emscripten/release
         cp "$OUT"/*.js deploy/ 2>/dev/null || true
         cp "$OUT"/*.wasm deploy/ 2>/dev/null || true
         cp "$OUT"/*.data deploy/ 2>/dev/null || true
-        
+
         cd deploy
         [ -f foo.js ] && mv foo.js dynamic_materials.js
         [ -f foo.wasm ] && mv foo.wasm dynamic_materials.wasm
-        
+
         ls -la
-        
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
@@ -78,7 +78,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
-    
+
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
