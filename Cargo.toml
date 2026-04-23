@@ -1,0 +1,20 @@
+[package]
+name = "dynamic_materials"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+env_logger = "0.11.10"
+log = "0.4.29"
+rand = "0.8"
+raylib = "5.5.1"
+serde = { version = "1.0", features = ["derive"] }
+toml = "1.1.2"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+
+[profile.dev.package."*"]
+opt-level = 3

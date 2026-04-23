@@ -1,0 +1,13 @@
+# config/materials.toml
+
+[[material]]
+id = 1
+name = "Sand"
+color = "#EEDD82"
+behavior = "granular"
+
+[[material]]
+id = 2
+name = "Water"
+color = "#6e6eff"
+behavior = "liquid"

@@ -1,0 +1,13 @@
+# config/menu.toml
+
+[[buttons]]
+id = "play_pause"
+label = "Play"
+action = "toggle_simulation"
+color = "#4CAF50"
+
+[[buttons]]
+id = "clear"
+label = "Clear"
+action = "clear_world"
+color = "#F44336"

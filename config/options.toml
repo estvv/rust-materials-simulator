@@ -1,0 +1,16 @@
+# config/options.toml
+
+[simulation]
+grid_width = 200
+grid_height = 150
+cell_size = 4
+fps_limit = 60
+
+[rendering]
+background_color = "#FFFFFF"
+show_grid = false
+show_fps = true
+
+[interaction]
+brush_size = 3
+default_material = 1

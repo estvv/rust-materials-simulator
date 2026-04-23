@@ -1,0 +1,21 @@
+# config/start.toml
+
+[simulation_state]
+tick = 0
+paused = false
+selected_material = 1
+
+[[cells]]
+x = 50
+y = 50
+material_id = 1
+
+[[cells]]
+x = 51
+y = 50
+material_id = 1
+
+[[cells]]
+x = 50
+y = 51
+material_id = 2
