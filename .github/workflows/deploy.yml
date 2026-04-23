@@ -42,13 +42,13 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           target
-        key: ${{ runner.os }}-cargo-emscripten-v2-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-emscripten-v3-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-          ${{ runner.os }}-cargo-emscripten-v2-
+          ${{ runner.os }}-cargo-emscripten-v3-
 
     - name: Build WASM
       env:
-        EMCC_CFLAGS: "-O3 -sUSE_GLFW=3 -sASSERTIONS=0 -sWASM=1 -sGL_ENABLE_GET_PROC_ADDRESS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1"
+        EMCC_CFLAGS: "-O3 -sUSE_GLFW=3 -sASSERTIONS=0 -sWASM=1 -sASYNCIFY -sGL_ENABLE_GET_PROC_ADDRESS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1"
       run: cargo build --target wasm32-unknown-emscripten --release
 
     - name: Prepare deployment package

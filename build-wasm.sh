@@ -6,7 +6,7 @@ echo "Building Dynamic Materials for WASM"
 echo "==================================="
 
 # Build with Emscripten (embed config files in WASM binary)
-export EMCC_CFLAGS="-O3 -sUSE_GLFW=3 -sASSERTIONS=0 -sWASM=1 -sGL_ENABLE_GET_PROC_ADDRESS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1"
+export EMCC_CFLAGS="-O3 -sUSE_GLFW=3 -sASSERTIONS=0 -sWASM=1 -sASYNCIFY -sGL_ENABLE_GET_PROC_ADDRESS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1"
 
 echo "Compiling Rust to WebAssembly..."
 cargo build --target wasm32-unknown-emscripten --release
