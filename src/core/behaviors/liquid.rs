@@ -4,7 +4,6 @@
 //! They use density to determine which materials they can flow through.
 
 use super::{BehaviorContext, MoveResult};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn find_position(ctx: &BehaviorContext) -> MoveResult {
     let x = ctx.x;
@@ -28,7 +27,8 @@ pub fn find_position(ctx: &BehaviorContext) -> MoveResult {
     }
 
     if !below_options.is_empty() {
-        return Some(below_options[rand_index(below_options.len())]);
+        let idx = pseudo_random(ctx.tick, x, y, 0) % below_options.len();
+        return Some(below_options[idx]);
     }
 
     let mut side_options: Vec<(u32, u32)> = Vec::new();
@@ -41,12 +41,13 @@ pub fn find_position(ctx: &BehaviorContext) -> MoveResult {
     }
 
     if !side_options.is_empty() {
-        let should_settle = (ctx.tick.wrapping_add(x).wrapping_add(y)) % 3 == 0;
+        let settle_chance = pseudo_random(ctx.tick, x, y, 1) % 4;
 
-        if should_settle {
+        if settle_chance == 0 {
             None
         } else {
-            Some(side_options[rand_index(side_options.len())])
+            let idx = pseudo_random(ctx.tick, x, y, 2) % side_options.len();
+            Some(side_options[idx])
         }
     } else {
         None
@@ -92,10 +93,12 @@ fn can_move_to(x: u32, y: u32, ctx: &BehaviorContext) -> bool {
     moving_density > target_density
 }
 
-fn rand_index(len: usize) -> usize {
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .subsec_nanos() as usize;
-    nanos % len
+fn pseudo_random(tick: u32, x: u32, y: u32, seed: u32) -> usize {
+    let mut n = tick
+        .wrapping_add(x.wrapping_mul(374761393))
+        .wrapping_add(y.wrapping_mul(668265263))
+        .wrapping_add(seed.wrapping_mul(1274126177));
+    n = (n ^ (n >> 13)).wrapping_mul(1274126177);
+    n = (n ^ (n >> 16)).wrapping_mul(1274126177);
+    n as usize
 }
